@@ -1,5 +1,399 @@
-Hello world
+<html>
 
-<br>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-Hello world 2
+    <script>
+        $(function () {
+            myApp = new Vue({
+                el: '#game',
+                data: {
+                    currentData: {
+                        valueLeft: 200,
+                        tries: 0,
+                        perclick: 10,
+                        timerSettings: [],
+                        instructions: [
+							'Welcome to "The Online Vending Machine", where the last person who paid and gets the drink dispensed is rewarded the drink.',
+							'No change will be provided.',
+							'Choose a game mode.'
+							]
+                    },
+                    customData: {
+                            valueLeft: 200,
+                        tries: 0,
+                        perclick: 10,
+                        timerSettings: []
+                    },
+                    timer: [],
+                    bgColour: 'black',
+                    mode: 'Not selected',
+                    message: 'Get the drink!',
+                    status: 'none'
+                },
+                methods: {
+                    deduct: function () {
+                        var currentData = this.currentData;
+                        if (currentData.tries > 0 && currentData.valueLeft > 0) {
+                            currentData.tries--;
+                            currentData.valueLeft -= currentData.perclick;
+                            if (currentData.valueLeft <= 0) {
+                                this.win();
+                            } else if (currentData.tries === 0) {
+                                this.lose();
+                            }
+                        }
+                    },
+                    setMode: function (mode, isCustomReset) {
+                        this.mode = mode;
+                        this.clearTimer();
+                        this.message = 'Get the drink!';
+                        this.status = 'none';
+
+                        var currentData = this.currentData;
+                        if (mode === 1) {
+                            currentData.valueLeft = 200;
+                            currentData.tries = 999;
+                            currentData.perclick = 10;
+                            currentData.timerSettings = [];
+                            currentData.instructions = [
+                                "Pay for the drink and see what happens."
+                            ];
+                        } else if (mode === 2) {
+                            currentData.valueLeft = 200;
+                            currentData.tries = 999;
+                            currentData.perclick = 10;
+                            currentData.timerSettings = [{
+                                interval: 1500,
+                                amount: 10
+                            }];
+                            currentData.instructions = [
+                                "Another customer is trying to get the drink.",
+                                "There's a pattern to how he's paying.",
+                                "Try to get the drink.",
+                            ];
+                        } else if (mode === 3) {
+                            currentData.valueLeft = 100;
+                            currentData.tries = 1;
+                            currentData.perclick = 10;
+                            currentData.timerSettings = [{
+                                interval: 1500,
+                                amount: 10
+                            }];
+                            currentData.instructions = [
+                                "You have only 1 remaining coin: 10-cents.",
+                                "That customer is still at it.",
+                                "Let's try getting the drink!",
+                            ];
+                        } else if (mode === 4) {
+                            currentData.valueLeft = 200;
+                            currentData.tries = 10;
+                            currentData.perclick = 20;
+                            currentData.timerSettings = [{
+                                    interval: 1300,
+                                    amount: 10
+                                },
+                                {
+                                    interval: 500,
+                                    amount: 20
+                                }
+                            ];
+                            currentData.instructions = [
+                                "There seem to be two customers trying this vending machine.",
+								"Thank goodness we have changed our coins to 20-cents.",
+                                "Let's see if we can get this drink",
+                            ];
+                        } else if (mode === 5) {
+                            currentData.valueLeft = 200;
+                            currentData.tries = 2;
+                            currentData.perclick = 100;
+                            currentData.timerSettings = [{
+                                    interval: 1300,
+                                    amount: 10
+                                },
+                                {
+                                    interval: 500,
+                                    amount: 20
+                                },
+                                {
+                                    interval: 3000,
+                                    amount: 50
+                                }
+                            ];
+                            currentData.instructions = [
+                                "Goodness, there's three customers trying this vending machine!",
+								"Thankfully, we managed to change our coins to $1.",
+                                "This drink should be easy to get.",
+                            ];
+                        } else if (mode === 'Custom') {
+                            var customData = this.customData;
+                            if (isCustomReset) {
+                                currentData.valueLeft = customData.valueLeft;
+                                currentData.tries = customData.tries;
+                                currentData.perclick = customData.perclick;
+                                currentData.timerSettings = customData.timerSettings;
+                            } else {
+                                customData.valueLeft = currentData.valueLeft;
+                                customData.tries = currentData.tries;
+                                customData.perclick = currentData.perclick;
+                                customData.timerSettings = currentData.timerSettings;
+                            }
+                        }
+
+                        var self = this;
+                        currentData.timerSettings.forEach(function (timer) {
+                            self.timer.push(self.deductTimer(timer.interval, timer.amount));
+                        });
+                    },
+                    deductTimer: function (interval, amount) {
+                        var self = this;
+                        return setInterval(function () {
+                                if (self.currentData.valueLeft > 0) {
+                                    self.currentData.valueLeft -= amount;
+                                    if (self.valueLessThanZero) {
+                                        self.lose();
+                                    }
+                                }
+                            },
+                            interval);;
+                    },
+                    clearTimer: function () {
+                        this.timer.forEach(function (t) {
+                            clearInterval(t);
+                        });
+                        this.timer = [];
+                        this.bgColour = 'black';
+                    },
+                    win: function () {
+                        this.clearTimer();
+                        this.bgColour = 'green';
+                        this.message = 'You got the drink!';
+                        this.status = 'win';
+                    },
+                    lose: function () {
+                        this.clearTimer();
+                        this.bgColour = 'red';
+                        this.message = 'Ah, too bad... Try again!';
+                        this.status = 'lose';
+                    },
+                    reset: function () {
+                        this.setMode(this.mode, 1);
+                    },
+                    valueLeftDisplay: function () {
+                        return (this.currentData.valueLeft / 100).toFixed(2);
+                    },
+                    perclickDisplay: function () {
+                        return (this.currentData.perclick / 100).toFixed(2);
+                    },
+                    addTimer: function () {
+                        this.currentData.timerSettings.push({
+                            interval: 0,
+                            amount: 0
+                        });
+                    },
+                    getParameterByName: function(name, url) {
+                        if (!url) url = window.location.href;
+                        
+                        name = name.replace(/[\[\]]/g, '\\$&');
+                        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                        results = regex.exec(url);
+                        
+                        if (!results) return null;
+                        if (!results[2]) return '';
+                        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+                    },
+                    modeButtonCss: function(modeNumber){
+                        return {selected: this.mode == modeNumber };
+                    },
+                    coinButtonCss: function(){
+                        var imgurl = 'img/' + this.currentData.perclick + '.png';
+                        return {backgroundImage: 'url(' + imgurl +  ')',
+                            backgroundSize: 'cover'};
+                    }
+                },
+                computed: {
+                    debugMode: function() {
+                        return this.getParameterByName('test') != null
+                    },
+                    valueLessThanZero: function () {
+                        return this.currentData.valueLeft <= 0
+                    },
+                    isWinStatus: function() {
+                        return this.status === 'win'
+                    }
+                }
+            });
+        });
+    </script>
+    <style>
+        .button {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            border: none;
+            text-decoration: none;
+            
+        }
+        .button:active {
+            box-shadow: 0 1px #FFF;
+            transform: translateY(4px);
+        }
+
+        button:focus {outline:0;}
+
+        .selected {
+            background-color: green
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .info th {
+            padding: 5px 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #ddd;
+        }
+
+        .info td, #customers th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .info {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        body::after{
+            position:absolute; width:0; height:0; overflow:hidden; z-index:-1;
+            content:url(img/5.png) url(img/10.png) url(img/20.png) url(img/50.png) url(img/100.png);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game">
+        <div class="center">
+            <div>
+                <h1>The Vending Machine</h1>
+            </div>
+            <table class="center" style="margin-left: auto; margin-right: auto;">
+                <tr>
+                    <td>
+                        <table class="center info" style="padding:2px">
+                            <tr>
+                                <th>
+                                    Drink Cost
+                                </th>
+                                <th>
+                                    Coins Left
+                                </th>
+                            </tr>
+                            <tr>
+                                <td>${{valueLeftDisplay()}}</td>
+                                <td>{{currentData.tries}}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td v-if="!isWinStatus" colspan="2">
+                        <button :style="coinButtonCss()" class="button" v-on:click="deduct"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" :style="{color: bgColour}">
+						<img v-if="isWinStatus" src="img/drink.jpeg" height="50%"></img>
+						</br>
+                        {{message}}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <button v-on:click="reset">Reset</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br />
+        <table>
+            <tr>
+                <td>
+                    Game Mode:
+                </td>
+                <td>
+                    <button :class="modeButtonCss(1)" v-on:click="setMode(1)">1</button>
+                    <button :class="modeButtonCss(2)" v-on:click="setMode(2)">2</button>
+                    <button :class="modeButtonCss(3)" v-on:click="setMode(3)">3</button>
+                    <button :class="modeButtonCss(4)" v-on:click="setMode(4)">4</button>
+                    <button :class="modeButtonCss(5)" v-on:click="setMode(5)">5</button>
+                </td>
+            </tr>
+            <template v-if='debugMode'>
+                <tr>
+                    <td>Drink Cost: </td>
+                    <td>
+                        <input type="text" v-model="currentData.valueLeft" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Coins Left: </td>
+                    <td>
+                        <input type="text" v-model="currentData.tries" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Coin Amount: </td>
+                    <td>
+                        <input type="text" v-model="currentData.perclick" />
+                    </td>
+                </tr>
+                <template v-for="(timer,index) in currentData.timerSettings">
+                    <tr>
+                        <td>Timer {{index+1}} Interval</td>
+                        <td>
+                            <input type="text" v-model="timer.interval" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Timer {{index+1}} Amount</td>
+                        <td>
+                            <input type="text" v-model="timer.amount" />
+                        </td>
+                    </tr>
+                </template>
+                <tr>
+                    <td></td>
+                    <td>
+                        <button v-on:click="addTimer()">Add Timer</button>
+                        <button v-on:click="clearTimer">Stop Timer</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <button v-on:click="setMode('Custom')">Set Custom values</button>
+                    </td>
+                </tr>
+            </template>
+        </table>
+        <div>
+            <div>
+                <h1>Instructions</h1>
+                <ol>
+                    <li v-for="(instruction) in currentData.instructions">{{instruction}}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

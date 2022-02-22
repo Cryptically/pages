@@ -1,0 +1,44 @@
+<html>
+
+<head>
+  <script>
+    var copyToClipboard = text => {
+      var dummy = document.createElement('textarea')
+      document.body.appendChild(dummy)
+      dummy.value = text
+      dummy.select()
+      document.execCommand('copy')
+      document.body.removeChild(dummy)
+    }
+
+    function doSplit() {
+      const data = document.getElementById('data').value
+
+      var rs = ''
+      data.split('\n').forEach(cur => {
+        var split = cur.split(',')
+        rs += `${cur}\t${split[0]} \n`
+        for (var i = 1; i <= split.length - 1; i++) { rs += '\t' + split[i] + '\n' }
+      })
+
+      copyToClipboard(rs)
+
+      document.getElementById('data-preview').innerHTML = rs
+      document.getElementById('result').innerHTML = `Copied to clipboard!<br>${new Date()}`
+    }
+
+  </script>
+</head>
+
+<body>
+  <b>Raw data</b><br />
+  <textarea id="data" rows="5" cols="60" name="description" placeholder="1,2,3&#10;3,4,5&#10;6,7,8"></textarea><br />
+  <input type="button" value="Split Data!" onclick="doSplit()"><br /><br />
+
+  <b>Preview</b><br />
+  <textarea id="data-preview" rows="5" cols="60" name="description"></textarea><br /><br />
+
+  <span id="result"></span><br /><br />
+</body>
+
+</html>
